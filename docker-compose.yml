@@ -1,0 +1,55 @@
+version: "3.9"
+
+services:
+  #  Backend 
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: projectflow-api
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./backend/.env
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - mongo
+    networks:
+      - projectflow-net
+
+  #  Frontend 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://localhost:5000
+    container_name: projectflow-client
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - projectflow-net
+
+  #  Local MongoDB (for dev/testing without Atlas) 
+  mongo:
+    image: mongo:7.0
+    container_name: projectflow-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - projectflow-net
+
+networks:
+  projectflow-net:
+    driver: bridge
+
+volumes:
+  mongo-data:
