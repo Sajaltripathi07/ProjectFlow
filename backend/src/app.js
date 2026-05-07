@@ -15,17 +15,25 @@ const dashboardRoutes = require("./routes/dashboard.routes");
 const app = express();
 
 
-const allowedOrigins = (process.env.CLIENT_URL || "http://localhost:5173")
+const allowedOrigins = (
+  process.env.CLIENT_URL ||
+  "http://localhost:5173"
+)
   .split(",")
   .map((o) => o.trim());
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (mobile apps, curl, Postman)
       if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin)) return callback(null, true);
-      callback(new Error(`CORS: origin ${origin} not allowed`));
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(
+        new Error(`CORS: origin ${origin} not allowed`)
+      );
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
@@ -33,13 +41,10 @@ app.use(
   })
 );
 
-/* ── Preflight for all routes ── */
-app.options("*", cors());
+app.options(/.*/, cors());
 
-/* ── Security Headers ── */
 app.use(helmet());
 
-/* ── Rate Limiting ── */
 const limiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
   max: parseInt(process.env.RATE_LIMIT_MAX) || 100,
